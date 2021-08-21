@@ -1,0 +1,8 @@
+name: TownyKOTH
+version: 1.0
+api-version: 1.14
+main: xyz.ludwicz.townykoth.TownyKOTH
+depend:
+  - Towny
+commands:
+  koth:
