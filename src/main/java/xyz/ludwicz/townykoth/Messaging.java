@@ -11,7 +11,7 @@ public class Messaging {
     public static final String KOTH_PREFIX = ChatColor.GOLD + "[KOTH] ";
 
     public static final String PLAYER_ONLY = "Only players can use this command.";
-
+    public static final String NO_PERMISSION = "You don't have permission to use this command.";
     public static final String DOESNT_EXIST = "There's no KOTH with the name %s.";
 
     public static void sendErrorMsg(CommandSender sender, String message) {

@@ -2,13 +2,18 @@ package xyz.ludwicz.townykoth;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.object.Town;
 import lombok.Getter;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class KOTHHandler {
@@ -75,6 +80,11 @@ public class KOTHHandler {
         save();
     }
 
+    public void deleteKoth(KOTH koth) {
+        koths.remove(koth);
+        save();
+    }
+
     public KOTH getKoth(String name) {
         for (KOTH koth : koths) {
             if (koth.getName().equalsIgnoreCase(name))
@@ -82,5 +92,48 @@ public class KOTHHandler {
         }
 
         return null;
+    }
+
+    public KOTH getKoth(Location location) {
+        if(TownyKOTH.getInstance().getConfig().getBoolean("koth_zone.include_townclaims", true)) {
+            Town town = TownyAPI.getInstance().getTown(location);
+            if(town != null) {
+                for(KOTH koth : koths)
+                    if(town.equals(koth.getTown()))
+                        return koth;
+            }
+        }
+
+        int radius = TownyKOTH.getInstance().getConfig().getInt("koth_zone.radius", 150);
+        for(KOTH koth : koths) {
+            double dist;
+            try {
+                dist = koth.getCapLocationBukkit().distance(location);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+
+            if(dist <= radius)
+                return koth;
+        }
+
+        return null;
+    }
+
+    public List<String> getKothNames() {
+        ArrayList<String> kothNames = new ArrayList<>();
+
+        for(KOTH koth : koths) {
+            kothNames.add(koth.getName());
+        }
+
+        return kothNames;
+    }
+
+    public void onJoin(Player player) {
+        for (KOTH koth : koths) {
+            if(koth.isActive())
+                koth.onJoin(player);
+        }
     }
 }

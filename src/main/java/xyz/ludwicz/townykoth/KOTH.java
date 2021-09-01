@@ -8,11 +8,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
-import xyz.ludwicz.townykoth.events.KOTHControlLostEvent;
+import xyz.ludwicz.townykoth.events.*;
 import xyz.ludwicz.townykoth.util.BlockCoord;
 import xyz.ludwicz.townykoth.util.TimeUtil;
 
@@ -95,12 +96,20 @@ public class KOTH {
     }
 
     public void startCapping(Player player) {
+        KOTHControlStartEvent event = new KOTHControlStartEvent(this, player);
+        Bukkit.getPluginManager().callEvent(event);
+
+        if(event.isCancelled())
+            return;
+
         capper = player.getUniqueId();
         capAt = System.currentTimeMillis() + capTime;
     }
 
     public void finishCapping(Player player) {
+        deactivate(false);
 
+        Bukkit.getPluginManager().callEvent(new KOTHCapturedEvent(this, player));
     }
 
     public void resetCap() {
@@ -120,9 +129,11 @@ public class KOTH {
 
         Bukkit.getOnlinePlayers().forEach(player -> bossBar.addPlayer(player));
         bossBar.setVisible(true);
+
+        Bukkit.getPluginManager().callEvent(new KOTHActivatedEvent(this));
     }
 
-    public void deactivate() {
+    public void deactivate(boolean terminate) {
         if(!active)
             return;
 
@@ -132,6 +143,8 @@ public class KOTH {
 
         bossBar.removeAll();
         bossBar.setVisible(false);
+
+        Bukkit.getPluginManager().callEvent(new KOTHDeactivatedEvent(this, terminate));
     }
 
     public boolean isCapzone(Location location) {
@@ -155,5 +168,22 @@ public class KOTH {
 
     public Town getTown() {
         return TownyAPI.getInstance().getTown(name);
+    }
+
+    public Location getCapLocationBukkit() {
+        World world = Bukkit.getWorld(this.world);
+        if(world == null)
+            return null;
+
+        return new Location(world, capLocation.getX(), capLocation.getY(), capLocation.getZ());
+    }
+
+    public void setCapLocation(Location location) {
+        world = location.getWorld().getName();
+        capLocation = BlockCoord.parseCoord(location);
+    }
+
+    public void onJoin(Player player) {
+        bossBar.addPlayer(player);
     }
 }

@@ -4,6 +4,8 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.ludwicz.townykoth.commands.KOTHCommand;
+import xyz.ludwicz.townykoth.listeners.BukkitListener;
+import xyz.ludwicz.townykoth.listeners.KOTHListener;
 import xyz.ludwicz.townykoth.listeners.TownyListener;
 
 public class TownyKOTH extends JavaPlugin {
@@ -17,6 +19,7 @@ public class TownyKOTH extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        saveDefaultConfig();
 
         setupHandlers();
         setupListeners();
@@ -28,6 +31,8 @@ public class TownyKOTH extends JavaPlugin {
     }
 
     private void setupListeners() {
+        Bukkit.getPluginManager().registerEvents(new BukkitListener(), this);
+        Bukkit.getPluginManager().registerEvents(new KOTHListener(), this);
         Bukkit.getPluginManager().registerEvents(new TownyListener(), this);
     }
 

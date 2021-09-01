@@ -1,0 +1,6 @@
+koth_zone:
+  radius: 150
+  include_townclaims: true
+  keep_inventory: true
+  reduce_armor_damage: true
+  prevent_building: true
