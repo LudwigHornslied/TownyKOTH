@@ -40,6 +40,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
             "loc",
             "distance",
             "dist",
+            "captime",
             "name"
     );
 
@@ -127,6 +128,9 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "create [name]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "delete [koth]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "set [] .. []", "'/koth set' for help"));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "teleport [koth]", ""));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "activate [koth]", ""));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "deactivate [koth]", ""));
     }
 
     private void parseKothCreate(Player sender, String[] args) {
@@ -186,6 +190,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
                 Player player = (Player) sender;
                 koth.setCapLocation(player.getLocation());
+                TownyKOTH.getInstance().getKothHandler().save();
                 Messaging.sendMsg(sender, ChatColor.AQUA + "Set cap location for " + koth.getName() + " Koth.");
             } else if (args[1].equalsIgnoreCase("distance") || args[1].equalsIgnoreCase("dist")) {
                 KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
@@ -203,8 +208,41 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 }
 
                 koth.setCapDistance(dist);
+                TownyKOTH.getInstance().getKothHandler().save();
                 Messaging.sendMsg(sender, ChatColor.AQUA + "Set max distance for " + koth.getName() + " Koth.");
+            } else if (args[1].equalsIgnoreCase("captime")) {
+                KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
+                if (koth == null)
+                    throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[2]));
+
+                if (args.length < 4)
+                    throw new Exception("Usage: /koth set captime [koth] [minutes]");
+
+                int minutes;
+                try {
+                    minutes = Integer.parseInt(args[3]);
+                } catch (NumberFormatException e) {
+                    throw new Exception("Usage: /koth set captime [koth] [minutes]");
+                }
+
+                if(minutes < 1)
+                    throw new Exception("Koth cap time can't be negative or 0.");
+
+                koth.setCapTime(minutes * 60 * 1000);
+                TownyKOTH.getInstance().getKothHandler().save();
+                Messaging.sendMsg(sender, ChatColor.AQUA + "Koth cap time has been set to " + minutes + " minutes.");
             } else if (args[1].equalsIgnoreCase("name")) {
+                KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
+                if (koth == null)
+                    throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[2]));
+
+                if (args.length < 4)
+                    throw new Exception("Usage: /koth set name [koth] [newname]");
+
+                String newName = args[3];
+                if(TownyKOTH.getInstance().getKothHandler().getKoth(newName) != null)
+                    new AlreadyRegisteredException("The koth with name " + newName + " already exists!");
+
 
             } else {
                 showSetHelp(sender);
