@@ -4,6 +4,8 @@ import com.palmergames.adventure.text.Component;
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.event.damage.TownyFriendlyFireTestEvent;
 import com.palmergames.bukkit.towny.event.statusscreen.TownStatusScreenEvent;
+import com.palmergames.bukkit.towny.event.town.TownMapColourLocalCalculationEvent;
+import com.palmergames.bukkit.towny.event.town.TownMapColourNationalCalculationEvent;
 import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.statusscreens.StatusScreen;
@@ -50,11 +52,12 @@ public class TownyListener implements Listener {
         statusScreen.removeStatusComponent("newline");
         statusScreen.removeStatusComponent("townranks");
         statusScreen.removeStatusComponent("residents");
+        statusScreen.removeStatusComponent("outposts");
 
         statusScreen.addComponentOf("location", Component.text(ChatColor.DARK_GREEN + "Location: " + ChatColor.GREEN + koth.getCapLocation().getX() + ", " + koth.getCapLocation().getZ() + " (" + koth.getWorld() + ")"));
 
+        List<String> additionalLines = new ArrayList<>();
         if (koth.isActive()) {
-            List<String> additionalLines = new ArrayList<>();
             additionalLines.add(ChatColor.DARK_GREEN + "KOTH: ");
             additionalLines.add(ChatColor.DARK_GREEN + " > Cap Time: " + ChatColor.GREEN + TimeUtil.formatTime(koth.getCapTime()));
             if (koth.getCapper() == null) {
@@ -66,8 +69,8 @@ public class TownyListener implements Listener {
                 additionalLines.add(ChatColor.DARK_GREEN + " > Remaining: " + ChatColor.GREEN + TimeUtil.formatTime(koth.getRemaining()));
             }
 
-            event.addLines(additionalLines);
         }
+        event.setLines(additionalLines);
     }
 
     @EventHandler
@@ -88,5 +91,27 @@ public class TownyListener implements Listener {
             return;
 
         event.setPVP(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onColorLocalCalculation(TownMapColourLocalCalculationEvent event) {
+        if(!TownyKOTH.getInstance().getConfig().getBoolean("town_dynmap_color.enabled", true))
+            return;
+
+        if (TownyKOTH.getInstance().getKothHandler().getKoth(event.getTown().getName()) == null)
+            return;
+
+        event.setMapColorHexCode(TownyKOTH.getInstance().getConfig().getString("town_dynmap_color.local", "000000"));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onColorNationCalculation(TownMapColourNationalCalculationEvent event) {
+        if(!TownyKOTH.getInstance().getConfig().getBoolean("town_dynmap_color.enabled", true))
+            return;
+
+        if (TownyKOTH.getInstance().getKothHandler().getKoth(event.getTown().getName()) == null)
+            return;
+
+        event.setMapColorHexCode(TownyKOTH.getInstance().getConfig().getString("town_dynmap_color.nation", "000000"));
     }
 }

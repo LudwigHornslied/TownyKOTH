@@ -4,5 +4,8 @@ api-version: 1.14
 main: xyz.ludwicz.townykoth.TownyKOTH
 depend:
   - Towny
+softdepend:
+  - dynmap
+  - SiegeWar
 commands:
   koth:

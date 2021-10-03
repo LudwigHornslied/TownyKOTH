@@ -4,3 +4,8 @@ koth_zone:
   keep_inventory: true
   reduce_armor_damage: true
   prevent_building: true
+
+town_dynmap_color:
+  enabled: true
+  local: 000000
+  nation: 000000

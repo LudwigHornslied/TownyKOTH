@@ -1,5 +1,6 @@
 package xyz.ludwicz.townykoth;
 
+import com.gmail.goosius.siegewar.metadata.TownMetaDataController;
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.object.Town;
 import lombok.Getter;
@@ -187,6 +188,19 @@ public class KOTH {
     public void setCapLocation(Location location) {
         world = location.getWorld().getName();
         capLocation = BlockCoord.parseCoord(location);
+    }
+
+    public void updateTown() {
+        Town town = getTown();
+        if(town == null)
+            return;
+
+        town.setAdminEnabledPVP(true);
+
+        if(TownyKOTH.getInstance().getSiegeWar() != null) {
+            // Only if minecraft exists then....
+            TownMetaDataController.setSiegeImmunityEndTime(town, 999999999999999L);
+        }
     }
 
     public void onJoin(Player player) {

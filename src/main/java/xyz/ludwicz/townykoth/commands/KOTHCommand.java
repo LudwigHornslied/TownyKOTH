@@ -66,6 +66,8 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                     if (args.length == 2)
                         return NameUtil.filterByStart(kothSetTabCompletes, args[1]);
 
+                    if (args.length == 3)
+                        return NameUtil.filterByStart(TownyKOTH.getInstance().getKothHandler().getKothNames(), args[1]);
                     break;
             }
         }
@@ -163,6 +165,9 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
             if (koth == null)
                 throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
 
+            if (koth.isActive())
+                throw new Exception("Koth is active! You should deactivate the koth before deleting it.");
+
             TownyKOTH.getInstance().getKothHandler().deleteKoth(koth);
             Messaging.sendMsg(sender, ChatColor.AQUA + "Koth " + koth.getName() + " has been deleted.");
         } catch (Exception e) {
@@ -225,7 +230,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                     throw new Exception("Usage: /koth set captime [koth] [minutes]");
                 }
 
-                if(minutes < 1)
+                if (minutes < 1)
                     throw new Exception("Koth cap time can't be negative or 0.");
 
                 koth.setCapTime(minutes * 60 * 1000);
@@ -240,7 +245,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                     throw new Exception("Usage: /koth set name [koth] [newname]");
 
                 String newName = args[3];
-                if(TownyKOTH.getInstance().getKothHandler().getKoth(newName) != null)
+                if (TownyKOTH.getInstance().getKothHandler().getKoth(newName) != null)
                     new AlreadyRegisteredException("The koth with name " + newName + " already exists!");
 
 
@@ -255,6 +260,10 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void showSetHelp(CommandSender sender) {
         sender.sendMessage(ChatTools.formatTitle("/koth set"));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "name [koth] [newname]", ""));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "location [koth]", ""));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "distance [koth] [distance]", ""));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "captime [koth] [minutes]", ""));
     }
 
     private void parseKothTeleport(Player sender, String[] args) {
@@ -267,7 +276,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
 
             Location location = koth.getCapLocationBukkit();
-            if(location == null)
+            if (location == null)
                 throw new Exception("An error has occured! The world might have not been loaded?");
 
             sender.teleport(location);
@@ -305,6 +314,11 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
             KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[1]);
             if (koth == null)
                 throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
+
+            if (!koth.isActive())
+                throw new Exception("Koth isn't active.");
+
+            koth.deactivate(true);
         } catch (Exception e) {
             Messaging.sendErrorMsg(sender, e.getMessage());
         }

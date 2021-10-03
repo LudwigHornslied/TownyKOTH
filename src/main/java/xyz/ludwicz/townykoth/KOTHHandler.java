@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import xyz.ludwicz.townykoth.task.DynmapTask;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class KOTHHandler {
                 KOTH koth = GSON.fromJson(FileUtils.readFileToString(file, "UTF-8"), KOTH.class);
                 koth.afterDeserealization();
                 koths.add(koth);
+                koth.updateTown();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,13 +78,20 @@ public class KOTHHandler {
     }
 
     public void newKoth(String name, Location location) {
-        koths.add(new KOTH(name, location));
+        KOTH koth = new KOTH(name, location);
+        koths.add(koth);
+        koth.afterDeserealization();
         save();
+
+        koth.updateTown();
+        DynmapTask.newMarker(koth);
     }
 
     public void deleteKoth(KOTH koth) {
         koths.remove(koth);
         save();
+
+        DynmapTask.removeMarker(koth);
     }
 
     public KOTH getKoth(String name) {
