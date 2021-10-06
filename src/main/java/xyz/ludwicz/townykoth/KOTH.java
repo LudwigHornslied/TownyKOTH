@@ -42,6 +42,9 @@ public class KOTH {
     @Getter
     @Setter
     private long capTime;
+    @Getter
+    @Setter
+    private String loot;
 
     @Getter
     @Setter

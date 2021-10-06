@@ -7,5 +7,101 @@ depend:
 softdepend:
   - dynmap
   - SiegeWar
+  - FlagWar
 commands:
   koth:
+  loot:
+
+permissions:
+  townykoth.admin:
+    description: User is able to access every feature of TownyKOTH
+    default: false
+    children:
+      townykoth.command.koth.*: true
+      townykoth.command.loot.*: true
+
+  townykoth.command.koth.*:
+    default: false
+    children:
+      townykoth.command.koth.list: true
+      townykoth.command.koth.create: true
+      townykoth.command.koth.delete: true
+      townykoth.command.koth.set.*: true
+      townykoth.command.koth.teleport: true
+      townykoth.command.koth.start: true
+
+  townykoth.command.koth.list:
+    default: false
+
+  townykoth.command.koth.create:
+    default: false
+
+  townykoth.command.koth.delete:
+    default: false
+
+  townykoth.command.koth.set.*:
+    default: false
+    children:
+      townykoth.command.koth.set.location: true
+      townykoth.command.koth.set.distance: true
+      townykoth.command.koth.set.captime: true
+      townykoth.command.koth.set.name: true
+
+  townykoth.command.koth.set.location:
+    default: false
+
+  townykoth.command.koth.set.distance:
+    default: false
+
+  townykoth.command.koth.set.captime:
+    default: false
+
+  townykoth.command.koth.set.name:
+    default: false
+
+  townykoth.command.koth.teleport:
+    default: false
+
+  townykoth.command.koth.start:
+    default: false
+
+  townykoth.command.koth.stop:
+    default: false
+
+  townykoth.command.loot.*:
+    default: false
+    children:
+      townykoth.command.loot.list: true
+      townykoth.command.loot.create: true
+      townykoth.command.loot.delete: true
+      townykoth.command.loot.edit: true
+      townykoth.command.loot.command.*: true
+
+
+  townykoth.command.loot.list:
+    default: false
+
+  townykoth.command.loot.create:
+    default: false
+
+  townykoth.command.loot.delete:
+    default: false
+
+  townykoth.command.loot.edit:
+    default: false
+
+  townykoth.command.loot.command.*:
+    default: false
+    children:
+      townykoth.command.loot.command.list: true
+      townykoth.command.loot.command.add: true
+      townykoth.command.loot.command.remove: true
+
+  townykoth.command.loot.command.list:
+    default: false
+
+  townykoth.command.loot.command.add:
+    default: false
+
+  townykoth.command.loot.command.remove:
+    default: false

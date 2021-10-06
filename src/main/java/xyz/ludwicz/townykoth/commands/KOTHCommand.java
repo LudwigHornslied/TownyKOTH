@@ -23,6 +23,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> kothTabCompletes = ImmutableList.of(
             "help",
+            "list",
             "create",
             "remove",
             "delete",
@@ -36,11 +37,13 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
     );
 
     private static final List<String> kothSetTabCompletes = ImmutableList.of(
+            "help",
             "location",
             "loc",
             "distance",
             "dist",
             "captime",
+            "loot",
             "name"
     );
 
@@ -66,8 +69,18 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                     if (args.length == 2)
                         return NameUtil.filterByStart(kothSetTabCompletes, args[1]);
 
-                    if (args.length == 3)
-                        return NameUtil.filterByStart(TownyKOTH.getInstance().getKothHandler().getKothNames(), args[1]);
+                    if (args.length == 3) {
+                        switch (args[1]) {
+                            case "location":
+                            case "loc":
+                            case "distance":
+                            case "dist":
+                            case "captime":
+                            case "loot":
+                            case "name":
+                                return NameUtil.filterByStart(TownyKOTH.getInstance().getKothHandler().getKothNames(), args[2]);
+                        }
+                    }
                     break;
             }
         }
@@ -81,12 +94,17 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
             for (KOTH koth : TownyKOTH.getInstance().getKothHandler().getKoths()) {
                 if (!koth.isActive())
                     continue;
+
+                Messaging.sendMsg(sender, ChatColor.BLUE + koth.getName() + ChatColor.YELLOW + " can be contested.");
             }
         } else {
             switch (args[0].toLowerCase()) {
                 case "?":
                 case "help":
                     showHelp(sender);
+                    break;
+                case "list":
+                    parseKothList(sender, args);
                     break;
                 case "create":
                     if (!(sender instanceof Player)) {
@@ -127,6 +145,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void showHelp(CommandSender sender) {
         sender.sendMessage(ChatTools.formatTitle("/koth"));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "list", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "create [name]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "delete [koth]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "set [] .. []", "'/koth set' for help"));
@@ -135,9 +154,31 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "deactivate [koth]", ""));
     }
 
+    private static final int KOTH_PER_PAGE = 7;
+
+    private void parseKothList(CommandSender sender, String[] args) {
+        try {
+            if (!sender.hasPermission("townykoth.command.koth.list"))
+                throw new Exception(Messaging.NO_PERMISSION);
+
+            int page;
+            if(args.length < 2) {
+                page = 1;
+            } else {
+                try {
+                    page = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    throw new Exception(String.format("Usage: /koth list [page]"));
+                }
+            }
+        } catch (Exception e) {
+            Messaging.sendErrorMsg(sender, e.getMessage());
+        }
+    }
+
     private void parseKothCreate(Player sender, String[] args) {
         try {
-            if (!sender.hasPermission("townykoth.admin"))
+            if (!sender.hasPermission("townykoth.command.koth.create"))
                 throw new Exception(Messaging.NO_PERMISSION);
 
             if (args.length < 2)
@@ -155,7 +196,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void parseKothDelete(CommandSender sender, String[] args) {
         try {
-            if (!sender.hasPermission("townykoth.admin"))
+            if (!sender.hasPermission("townykoth.command.koth.delete"))
                 throw new Exception(Messaging.NO_PERMISSION);
 
             if (args.length < 2)
@@ -163,7 +204,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
             KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[1]);
             if (koth == null)
-                throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
+                throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[1]));
 
             if (koth.isActive())
                 throw new Exception("Koth is active! You should deactivate the koth before deleting it.");
@@ -177,18 +218,23 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void parseKothSet(CommandSender sender, String[] args) {
         try {
-            if (!sender.hasPermission("townykoth.admin"))
-                throw new Exception(Messaging.NO_PERMISSION);
-
             if (args.length < 3) {
                 showSetHelp(sender);
                 return;
             }
 
-            if (args[1].equalsIgnoreCase("location") || args[1].equalsIgnoreCase("loc")) {
+            if (args[1].equalsIgnoreCase("help") || args[1].equals("?")) {
+                showSetHelp(sender);
+            } else if (args[1].equalsIgnoreCase("location") || args[1].equalsIgnoreCase("loc")) {
+                if (!sender.hasPermission("townykoth.command.koth.set.location"))
+                    throw new Exception(Messaging.NO_PERMISSION);
+
                 KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
                 if (koth == null)
-                    throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[2]));
+                    throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[2]));
+
+                if (koth.isActive())
+                    throw new Exception("Koth is active! You should deactivate the koth before doing this.");
 
                 if (!(sender instanceof Player))
                     throw new Exception(Messaging.PLAYER_ONLY);
@@ -198,9 +244,15 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 TownyKOTH.getInstance().getKothHandler().save();
                 Messaging.sendMsg(sender, ChatColor.AQUA + "Set cap location for " + koth.getName() + " Koth.");
             } else if (args[1].equalsIgnoreCase("distance") || args[1].equalsIgnoreCase("dist")) {
+                if (!sender.hasPermission("townykoth.command.koth.set.distance"))
+                    throw new Exception(Messaging.NO_PERMISSION);
+
                 KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
                 if (koth == null)
-                    throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[2]));
+                    throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[2]));
+
+                if (koth.isActive())
+                    throw new Exception("Koth is active! You should deactivate the koth before doing this.");
 
                 if (args.length < 4)
                     throw new Exception("Usage: /koth set distance [koth] [number]");
@@ -216,9 +268,15 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 TownyKOTH.getInstance().getKothHandler().save();
                 Messaging.sendMsg(sender, ChatColor.AQUA + "Set max distance for " + koth.getName() + " Koth.");
             } else if (args[1].equalsIgnoreCase("captime")) {
+                if (!sender.hasPermission("townykoth.command.koth.set.captime"))
+                    throw new Exception(Messaging.NO_PERMISSION);
+
                 KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
                 if (koth == null)
-                    throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[2]));
+                    throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[2]));
+
+                if (koth.isActive())
+                    throw new Exception("Koth is active! You should deactivate the koth before doing this.");
 
                 if (args.length < 4)
                     throw new Exception("Usage: /koth set captime [koth] [minutes]");
@@ -236,10 +294,21 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 koth.setCapTime(minutes * 60 * 1000);
                 TownyKOTH.getInstance().getKothHandler().save();
                 Messaging.sendMsg(sender, ChatColor.AQUA + "Koth cap time has been set to " + minutes + " minutes.");
+            } else if (args[1].equalsIgnoreCase("loot")) {
+                if (!sender.hasPermission("townykoth.command.koth.set.loot"))
+                    throw new Exception(Messaging.NO_PERMISSION);
+
+
             } else if (args[1].equalsIgnoreCase("name")) {
+                if (!sender.hasPermission("townykoth.command.koth.set.name"))
+                    throw new Exception(Messaging.NO_PERMISSION);
+
                 KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
                 if (koth == null)
-                    throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[2]));
+                    throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[2]));
+
+                if (koth.isActive())
+                    throw new Exception("Koth is active! You should deactivate the koth before doing this.");
 
                 if (args.length < 4)
                     throw new Exception("Usage: /koth set name [koth] [newname]");
@@ -248,7 +317,9 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 if (TownyKOTH.getInstance().getKothHandler().getKoth(newName) != null)
                     new AlreadyRegisteredException("The koth with name " + newName + " already exists!");
 
-
+                koth.setName(newName);
+                TownyKOTH.getInstance().getKothHandler().save();
+                Messaging.sendMsg(sender, ChatColor.AQUA + "Koth name has been changed to " + koth.getName() + ".");
             } else {
                 showSetHelp(sender);
             }
@@ -268,12 +339,15 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void parseKothTeleport(Player sender, String[] args) {
         try {
+            if (!sender.hasPermission("townykoth.command.koth.teleport"))
+                throw new Exception(Messaging.NO_PERMISSION);
+
             if (args.length < 2)
                 throw new Exception(String.format("Usage: /koth teleport [koth]"));
 
             KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[1]);
             if (koth == null)
-                throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
+                throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[1]));
 
             Location location = koth.getCapLocationBukkit();
             if (location == null)
@@ -287,7 +361,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void parseKothStart(CommandSender sender, String[] args) {
         try {
-            if (!sender.hasPermission("townykoth.admin"))
+            if (!sender.hasPermission("townykoth.command.koth.start"))
                 throw new Exception(Messaging.NO_PERMISSION);
 
             if (args.length < 2)
@@ -295,7 +369,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
             KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[1]);
             if (koth == null)
-                throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
+                throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[1]));
 
             koth.activate();
         } catch (Exception e) {
@@ -305,7 +379,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void parseKothStop(CommandSender sender, String[] args) {
         try {
-            if (!sender.hasPermission("townykoth.admin"))
+            if (!sender.hasPermission("townykoth.command.koth.stop"))
                 throw new Exception(Messaging.NO_PERMISSION);
 
             if (args.length < 2)
@@ -313,7 +387,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
             KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[1]);
             if (koth == null)
-                throw new NotRegisteredException(String.format(Messaging.DOESNT_EXIST, args[1]));
+                throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[1]));
 
             if (!koth.isActive())
                 throw new Exception("Koth isn't active.");

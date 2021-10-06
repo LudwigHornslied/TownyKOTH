@@ -12,7 +12,8 @@ public class Messaging {
 
     public static final String PLAYER_ONLY = "Only players can use this command.";
     public static final String NO_PERMISSION = "You don't have permission to use this command.";
-    public static final String DOESNT_EXIST = "There's no KOTH with the name %s.";
+    public static final String KOTH_DOESNT_EXIST = "There's no KOTH with the name %s.";
+    public static final String LOOT_DOESNT_EXIST = "There's no loot with the name %s.";
 
     public static void sendErrorMsg(CommandSender sender, String message) {
         if(sender instanceof ConsoleCommandSender) {

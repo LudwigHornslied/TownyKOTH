@@ -14,6 +14,7 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import xyz.ludwicz.townykoth.KOTH;
@@ -151,5 +152,13 @@ public class BukkitListener implements Listener {
         Player player = event.getPlayer();
         player.getInventory().remove(Material.COBWEB);
         player.sendMessage(ChatColor.RED + "You can't use cobwebs on the capzone.");
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if(!event.getView().getTitle().equals("Edit Loot"))
+            return;
+
+        TownyKOTH.getInstance().getLootHandler().save();
     }
 }

@@ -1,5 +1,8 @@
 package xyz.ludwicz.townykoth.task;
 
+import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.util.StringMgmt;
+import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.Marker;
@@ -9,8 +12,11 @@ import org.dynmap.markers.MarkerSet;
 import xyz.ludwicz.townykoth.KOTH;
 import xyz.ludwicz.townykoth.TownyKOTH;
 import xyz.ludwicz.townykoth.util.BlockCoord;
+import xyz.ludwicz.townykoth.util.TimeUtil;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,6 +66,7 @@ public class DynmapTask extends BukkitRunnable {
                 updateMarker(koth, marker);
             } else {
                 iterator.remove();
+                marker.deleteMarker();
 
                 kothMarkerMap.put(koth, createMarker(koth));
             }
@@ -79,6 +86,9 @@ public class DynmapTask extends BukkitRunnable {
         Marker marker = markerSet.createMarker(koth.getName(), koth.getName() + " KOTH", koth.getWorld(), coord.getX(), coord.getY(), coord.getZ(), icon, false);
 
         marker.setLabel(koth.getName() + " KOTH");
+        if(koth.isActive()) {
+
+        }
 
         return marker;
     }
@@ -95,6 +105,24 @@ public class DynmapTask extends BukkitRunnable {
 
         marker.setMarkerIcon(icon);
         marker.setLocation(koth.getWorld(), coord.getX(), coord.getY(), coord.getZ());
+        if(koth.isActive()) {
+            List<String> lines = new ArrayList<>();
+
+            lines.add("Cap time: " + TimeUtil.formatTime(koth.getCapTime()));
+            lines.add("Remaining: " + TimeUtil.formatTime(koth.getRemaining()));
+            lines.add("");
+            if(koth.getCapper() == null) {
+                lines.add("Capper: None");
+            } else {
+                lines.add("Capper: " + Bukkit.getPlayer(koth.getCapper()).getName());
+                lines.add("Cap time: " + TownyAPI.getInstance().getResidentNationOrNull(TownyAPI.getInstance().getResident(koth.getCapper())));
+            }
+
+            String desc = "<b>" + koth.getName() + " KOTH" + "</b><hr>" + StringMgmt.join(lines, "<br>");
+            marker.setDescription(desc);
+        } else {
+            marker.setDescription(null);
+        }
     }
 
     public static void newMarker(KOTH koth) {

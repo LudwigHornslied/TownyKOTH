@@ -2,6 +2,7 @@ package xyz.ludwicz.townykoth.listeners;
 
 import com.palmergames.adventure.text.Component;
 import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.event.NewTownEvent;
 import com.palmergames.bukkit.towny.event.damage.TownyFriendlyFireTestEvent;
 import com.palmergames.bukkit.towny.event.statusscreen.TownStatusScreenEvent;
 import com.palmergames.bukkit.towny.event.town.TownMapColourLocalCalculationEvent;
@@ -25,6 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TownyListener implements Listener {
+
+    @EventHandler
+    public void onTownCreate(NewTownEvent event) {
+        KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(event.getTown().getName());
+        if (koth == null)
+            return;
+
+        koth.updateTown();
+    }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onTownInfo(TownStatusScreenEvent event) {
@@ -55,6 +65,7 @@ public class TownyListener implements Listener {
         statusScreen.removeStatusComponent("outposts");
 
         statusScreen.addComponentOf("location", Component.text(ChatColor.DARK_GREEN + "Location: " + ChatColor.GREEN + koth.getCapLocation().getX() + ", " + koth.getCapLocation().getZ() + " (" + koth.getWorld() + ")"));
+        statusScreen.addComponentOf("captime", Component.text(ChatColor.DARK_GREEN + "Cap Time: " + ChatColor.GREEN + TimeUtil.formatTime(koth.getCapTime())));
 
         List<String> additionalLines = new ArrayList<>();
         if (koth.isActive()) {

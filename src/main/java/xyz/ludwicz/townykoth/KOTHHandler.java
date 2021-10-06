@@ -94,6 +94,13 @@ public class KOTHHandler {
         DynmapTask.removeMarker(koth);
     }
 
+    public void removeLoot(String loot) {
+        for(KOTH koth : koths) {
+            if(koth.getLoot().equalsIgnoreCase(loot))
+                koth.setLoot(null);
+        }
+    }
+
     public KOTH getKoth(String name) {
         for (KOTH koth : koths) {
             if (koth.getName().equalsIgnoreCase(name))
