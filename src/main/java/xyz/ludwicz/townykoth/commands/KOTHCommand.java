@@ -1,6 +1,8 @@
 package xyz.ludwicz.townykoth.commands;
 
 import com.google.common.collect.ImmutableList;
+import com.palmergames.bukkit.towny.Towny;
+import com.palmergames.bukkit.towny.TownyMessaging;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.utils.NameUtil;
@@ -15,7 +17,9 @@ import org.bukkit.entity.Player;
 import xyz.ludwicz.townykoth.KOTH;
 import xyz.ludwicz.townykoth.Messaging;
 import xyz.ludwicz.townykoth.TownyKOTH;
+import xyz.ludwicz.townykoth.loot.Loot;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -66,10 +70,9 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
                     break;
                 case "set":
-                    if (args.length == 2)
+                    if (args.length == 2) {
                         return NameUtil.filterByStart(kothSetTabCompletes, args[1]);
-
-                    if (args.length == 3) {
+                    } else if (args.length == 3) {
                         switch (args[1]) {
                             case "location":
                             case "loc":
@@ -79,6 +82,11 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                             case "loot":
                             case "name":
                                 return NameUtil.filterByStart(TownyKOTH.getInstance().getKothHandler().getKothNames(), args[2]);
+                        }
+                    } else if (args.length == 4) {
+                        switch (args[1]) {
+                            case "loot":
+                                return NameUtil.filterByStart(TownyKOTH.getInstance().getLootHandler().getLootNames(), args[3]);
                         }
                     }
                     break;
@@ -145,7 +153,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
 
     private void showHelp(CommandSender sender) {
         sender.sendMessage(ChatTools.formatTitle("/koth"));
-        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "list", ""));
+        sender.sendMessage(ChatTools.formatCommand("", "/koth", "list", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "create [name]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "delete [koth]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth", "set [] .. []", "'/koth set' for help"));
@@ -162,7 +170,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 throw new Exception(Messaging.NO_PERMISSION);
 
             int page;
-            if(args.length < 2) {
+            if (args.length < 2) {
                 page = 1;
             } else {
                 try {
@@ -171,6 +179,22 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                     throw new Exception(String.format("Usage: /koth list [page]"));
                 }
             }
+
+            if (page <= 0)
+                throw new Exception("Invalid page.");
+
+            List<KOTH> kothList = new ArrayList<>(TownyKOTH.getInstance().getKothHandler().getKoths());
+
+            int startIndex = KOTH_PER_PAGE * (page - 1);
+            if (startIndex >= kothList.size())
+                throw new Exception("Invalid page.");
+
+            sender.sendMessage(ChatTools.formatTitle(ChatColor.YELLOW + "Koths"));
+            for (int index = startIndex, i = 0; index < kothList.size() && i < KOTH_PER_PAGE; index++, i++) {
+                KOTH koth = kothList.get(index);
+                sender.sendMessage(ChatColor.DARK_AQUA + koth.getName());
+            }
+            Towny.getAdventure().sender(sender).sendMessage(TownyMessaging.getPageNavigationFooter("townykoth:koth list", page, "", kothList.size() / KOTH_PER_PAGE + 1));
         } catch (Exception e) {
             Messaging.sendErrorMsg(sender, e.getMessage());
         }
@@ -298,7 +322,19 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
                 if (!sender.hasPermission("townykoth.command.koth.set.loot"))
                     throw new Exception(Messaging.NO_PERMISSION);
 
+                KOTH koth = TownyKOTH.getInstance().getKothHandler().getKoth(args[2]);
+                if (koth == null)
+                    throw new NotRegisteredException(String.format(Messaging.KOTH_DOESNT_EXIST, args[2]));
 
+                if (args.length < 4)
+                    throw new Exception("Usage: /koth set loot [koth] [loot]");
+
+                Loot loot = TownyKOTH.getInstance().getLootHandler().getLoot(args[3]);
+                if (loot == null)
+                    throw new NotRegisteredException(String.format(Messaging.LOOT_DOESNT_EXIST, args[3]));
+
+                koth.setLoot(loot.getName());
+                Messaging.sendMsg(sender, "Koth loot has been set to " + loot.getName() + ".");
             } else if (args[1].equalsIgnoreCase("name")) {
                 if (!sender.hasPermission("townykoth.command.koth.set.name"))
                     throw new Exception(Messaging.NO_PERMISSION);
@@ -335,6 +371,7 @@ public class KOTHCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "location [koth]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "distance [koth] [distance]", ""));
         sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "captime [koth] [minutes]", ""));
+        sender.sendMessage(ChatTools.formatCommand("Admin", "/koth set", "loot [koth] [loot]", ""));
     }
 
     private void parseKothTeleport(Player sender, String[] args) {

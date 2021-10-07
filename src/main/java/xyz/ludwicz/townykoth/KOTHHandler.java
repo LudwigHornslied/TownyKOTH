@@ -96,7 +96,7 @@ public class KOTHHandler {
 
     public void removeLoot(String loot) {
         for(KOTH koth : koths) {
-            if(koth.getLoot().equalsIgnoreCase(loot))
+            if(koth.getLoot() != null && koth.getLoot().equalsIgnoreCase(loot))
                 koth.setLoot(null);
         }
     }

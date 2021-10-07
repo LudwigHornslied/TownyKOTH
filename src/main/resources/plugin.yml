@@ -1,6 +1,6 @@
 name: TownyKOTH
-version: 1.0
-api-version: 1.14
+version: ${project.version}
+api-version: ${project.bukkitAPIVersion}
 main: xyz.ludwicz.townykoth.TownyKOTH
 depend:
   - Towny
@@ -46,6 +46,7 @@ permissions:
       townykoth.command.koth.set.distance: true
       townykoth.command.koth.set.captime: true
       townykoth.command.koth.set.name: true
+      townykoth.command.koth.set.loot: true
 
   townykoth.command.koth.set.location:
     default: false
@@ -57,6 +58,9 @@ permissions:
     default: false
 
   townykoth.command.koth.set.name:
+    default: false
+
+  townykoth.command.koth.set.loot:
     default: false
 
   townykoth.command.koth.teleport:

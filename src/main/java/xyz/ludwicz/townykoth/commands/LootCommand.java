@@ -1,6 +1,8 @@
 package xyz.ludwicz.townykoth.commands;
 
 import com.google.common.collect.ImmutableList;
+import com.palmergames.bukkit.towny.Towny;
+import com.palmergames.bukkit.towny.TownyMessaging;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.utils.NameUtil;
@@ -15,6 +17,7 @@ import xyz.ludwicz.townykoth.Messaging;
 import xyz.ludwicz.townykoth.TownyKOTH;
 import xyz.ludwicz.townykoth.loot.Loot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +85,7 @@ public class LootCommand implements CommandExecutor, TabCompleter {
                     showHelp(sender);
                     break;
                 case "list":
+                    parseLootList(sender, args);
                     break;
                 case "create":
                     parseLootCreate(sender, args);
@@ -115,8 +119,42 @@ public class LootCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatTools.formatCommand("Admin", "/loot", "command [] .. []", "'/loot command' for help"));
     }
 
-    private void parseLootList(CommandSender sender, String[] args) {
+    private static final int LOOT_PER_PAGE = 7;
 
+    private void parseLootList(CommandSender sender, String[] args) {
+        try {
+            if (!sender.hasPermission("townykoth.command.loot.list"))
+                throw new Exception(Messaging.NO_PERMISSION);
+
+            int page;
+            if (args.length < 2) {
+                page = 1;
+            } else {
+                try {
+                    page = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    throw new Exception(String.format("Usage: /loot list [page]"));
+                }
+            }
+
+            if (page <= 0)
+                throw new Exception("Invalid page.");
+
+            List<Loot> lootList = new ArrayList<>(TownyKOTH.getInstance().getLootHandler().getLoots());
+
+            int startIndex = LOOT_PER_PAGE * (page - 1);
+            if (startIndex >= lootList.size())
+                throw new Exception("Invalid page.");
+
+            sender.sendMessage(ChatTools.formatTitle(ChatColor.YELLOW + "Loots"));
+            for (int index = startIndex, i = 0; index < lootList.size() && i < LOOT_PER_PAGE; index++, i++) {
+                Loot loot = lootList.get(index);
+                sender.sendMessage(ChatColor.DARK_AQUA + loot.getName());
+            }
+            Towny.getAdventure().sender(sender).sendMessage(TownyMessaging.getPageNavigationFooter("townykoth:loot list", page, "", lootList.size() / LOOT_PER_PAGE + 1));
+        } catch (Exception e) {
+            Messaging.sendErrorMsg(sender, e.getMessage());
+        }
     }
 
     private void parseLootCreate(CommandSender sender, String[] args) {
@@ -200,7 +238,7 @@ public class LootCommand implements CommandExecutor, TabCompleter {
                 if (args.length < 4)
                     throw new Exception("Usage: /loot command add [loot] [command]");
 
-                String command = String.join(" ", Arrays.copyOfRange(args, 3, args.length - 1));
+                String command = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
                 loot.getCommands().add(command);
                 TownyKOTH.getInstance().getLootHandler().save();
                 Messaging.sendMsg(sender, ChatColor.AQUA + "Command added.");
